@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+  <!-- Table: first column = status circles (green, red, gray) -->
+  <circle cx="5" cy="6" r="2.5" fill="#000000"/>
+  <circle cx="5" cy="13" r="2.5" fill="#000000"/>
+  <circle cx="5" cy="20" r="2.5" fill="#000000"/>
+  <!-- Row separators -->
+  <line x1="10" y1="6" x2="22" y2="6"/>
+  <line x1="10" y1="13" x2="22" y2="13"/>
+  <line x1="10" y1="20" x2="22" y2="20"/>
+</svg>

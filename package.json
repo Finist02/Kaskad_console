@@ -1,0 +1,762 @@
+{
+  "name": "kaskad-project-admin",
+  "displayName": "Kaskad Project Admin",
+  "description": "Central control and monitoring for Kaskad and OEM SCADA projects - project management, system status, and manager control",
+  "publisher": "Danil",
+  "version": "1.0.0",
+  "license": "MIT",
+  "icon": "resources/kaskad-icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kaskad-tools/vscode-kaskad-project-admin"
+  },
+  "engines": {
+    "vscode": "^1.105.1"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "kaskad"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "private": false,
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "kaskad-project-admin",
+          "title": "Kaskad Project Admin",
+          "icon": "resources/kaskad-icon-tree.svg"
+        }
+      ]
+    },
+    "views": {
+      "kaskad-project-admin": [
+        {
+          "id": "kaskad.systemView",
+          "name": "System Status",
+          "icon": "$(server)"
+        },
+        {
+          "id": "kaskad.managerView",
+          "name": "Managers",
+          "icon": "$(tools)"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "kaskad.diagnostics",
+        "title": "Show extension diagnostics",
+        "category": "Kaskad"
+      },
+      {
+        "command": "kaskad.core.selectProject",
+        "title": "Select Kaskad Project",
+        "category": "Kaskad"
+      },
+      {
+        "command": "kaskad.core.refreshProjects",
+        "title": "Refresh Kaskad Projects",
+        "category": "Kaskad"
+      },
+      {
+        "command": "kaskad.core.showProjectInfo",
+        "title": "Show Current Project Info",
+        "category": "Kaskad"
+      },
+      {
+        "command": "kaskad.manager.start",
+        "title": "Start Manager",
+        "category": "Kaskad",
+        "icon": "$(play)"
+      },
+      {
+        "command": "kaskad.manager.stop",
+        "title": "Stop Manager",
+        "category": "Kaskad",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "kaskad.manager.restart",
+        "title": "Restart Manager",
+        "category": "Kaskad",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "kaskad.manager.delete",
+        "title": "Delete Manager",
+        "category": "Kaskad",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "kaskad.manager.edit",
+        "title": "Edit Manager Settings",
+        "category": "Kaskad",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "kaskad.manager.add",
+        "title": "Add Manager",
+        "category": "Kaskad",
+        "icon": "$(add)"
+      },
+      {
+        "command": "kaskad.system.start",
+        "title": "Start PMON",
+        "category": "Kaskad",
+        "icon": "$(play)"
+      },
+      {
+        "command": "kaskad.system.stop",
+        "title": "Stop PMON",
+        "category": "Kaskad",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "kaskad.system.restart",
+        "title": "Restart PMON",
+        "category": "Kaskad",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "kaskad.project.start",
+        "title": "Start Project",
+        "category": "Kaskad",
+        "icon": "$(play)"
+      },
+      {
+        "command": "kaskad.project.stop",
+        "title": "Stop Project",
+        "category": "Kaskad",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "kaskad.openConfig",
+        "title": "Open Config",
+        "category": "Kaskad",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "kaskad.systemView.refresh",
+        "title": "Refresh",
+        "category": "Kaskad",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "kaskad.managerView.refresh",
+        "title": "Refresh",
+        "category": "Kaskad",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "kaskad.project.setActive",
+        "title": "Set as Active Project",
+        "category": "Kaskad"
+      },
+      {
+        "command": "kaskad.project.addToWorkspace",
+        "title": "Add Project to Workspace",
+        "category": "Kaskad"
+      },
+      {
+        "command": "kaskad.project.openInExplorer",
+        "title": "Open in Explorer",
+        "category": "Kaskad"
+      },
+      {
+        "command": "kaskad.subproject.addToWorkspace",
+        "title": "Add Subproject to Workspace",
+        "category": "Kaskad"
+      },
+      {
+        "command": "kaskad.subproject.openInExplorer",
+        "title": "Open in Explorer",
+        "category": "Kaskad"
+      },
+      {
+        "command": "kaskad.project.register",
+        "title": "Register New Project",
+        "category": "Kaskad",
+        "icon": "$(add)"
+      },
+      {
+        "command": "kaskad.project.unregister",
+        "title": "Unregister Project",
+        "category": "Kaskad",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "kaskad.explorer.registerProject",
+        "title": "Register as Kaskad Project",
+        "category": "Kaskad"
+      },
+      {
+        "command": "kaskad.project.addToFavorites",
+        "title": "Add to Favorites",
+        "category": "Kaskad"
+      },
+      {
+        "command": "kaskad.project.removeFromFavorites",
+        "title": "Remove from Favorites",
+        "category": "Kaskad"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "kaskad.systemView.refresh",
+          "when": "view == kaskad.systemView",
+          "group": "navigation"
+        },
+        {
+          "command": "kaskad.openConfig",
+          "when": "view == kaskad.systemView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "kaskad.project.register",
+          "when": "view == kaskad.systemView",
+          "group": "navigation@4"
+        },
+        {
+          "command": "kaskad.managerView.refresh",
+          "when": "view == kaskad.managerView",
+          "group": "navigation"
+        },
+        {
+          "command": "kaskad.manager.add",
+          "when": "view == kaskad.managerView",
+          "group": "navigation@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "kaskad.manager.start",
+          "when": "view == kaskad.managerView && viewItem == manager",
+          "group": "inline"
+        },
+        {
+          "command": "kaskad.manager.stop",
+          "when": "view == kaskad.managerView && viewItem == manager",
+          "group": "inline"
+        },
+        {
+          "command": "kaskad.manager.restart",
+          "when": "view == kaskad.managerView && viewItem == manager",
+          "group": "inline"
+        },
+        {
+          "command": "kaskad.manager.delete",
+          "when": "view == kaskad.managerView && viewItem == manager",
+          "group": "manager@2"
+        },
+        {
+          "command": "kaskad.manager.edit",
+          "when": "view == kaskad.managerView && viewItem == manager",
+          "group": "manager@1"
+        },
+        {
+          "command": "kaskad.project.start",
+          "when": "view == kaskad.systemView && viewItem =~ /^project(-favorite|-nonfavorite)?$/",
+          "group": "inline@1"
+        },
+        {
+          "command": "kaskad.project.stop",
+          "when": "view == kaskad.systemView && viewItem =~ /^project(-favorite|-nonfavorite)?$/",
+          "group": "inline@2"
+        },
+        {
+          "command": "kaskad.project.setActive",
+          "when": "view == kaskad.systemView && viewItem =~ /^project(-favorite|-nonfavorite)?$/",
+          "group": "1_project@1"
+        },
+        {
+          "command": "kaskad.project.addToFavorites",
+          "when": "view == kaskad.systemView && viewItem == project-nonfavorite",
+          "group": "1_project@2"
+        },
+        {
+          "command": "kaskad.project.removeFromFavorites",
+          "when": "view == kaskad.systemView && viewItem == project-favorite",
+          "group": "1_project@3"
+        },
+        {
+          "command": "kaskad.project.addToWorkspace",
+          "when": "view == kaskad.systemView && viewItem =~ /^project(-favorite|-nonfavorite)?$/",
+          "group": "1_project@4"
+        },
+        {
+          "command": "kaskad.project.openInExplorer",
+          "when": "view == kaskad.systemView && viewItem =~ /^project(-favorite|-nonfavorite)?$/",
+          "group": "2_open@1"
+        },
+        {
+          "command": "kaskad.project.unregister",
+          "when": "view == kaskad.systemView && viewItem =~ /^project(-favorite|-nonfavorite)?$/",
+          "group": "9_danger@1"
+        },
+        {
+          "command": "kaskad.subproject.addToWorkspace",
+          "when": "view == kaskad.systemView && viewItem == subproject",
+          "group": "1_workspace@1"
+        },
+        {
+          "command": "kaskad.subproject.openInExplorer",
+          "when": "view == kaskad.systemView && viewItem == subproject",
+          "group": "2_open@1"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "kaskad.explorer.registerProject",
+          "when": "explorerResourceIsFolder",
+          "group": "kaskad@1"
+        }
+      ]
+    },
+    "languageModelTools": [
+      {
+        "name": "kaskad_list_projects",
+        "displayName": "List Kaskad Projects",
+        "modelDescription": "Get all registered Kaskad projects with their status (running/stopped/error). Use when the user asks about available projects, project lists, or which projects exist.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "kaskad_projects",
+        "icon": "$(list-unordered)",
+        "userDescription": "List all Kaskad projects with status information",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "statusFilter": {
+              "type": "string",
+              "enum": [
+                "all",
+                "running",
+                "stopped",
+                "error"
+              ],
+              "description": "Filter projects by status (default: all)"
+            }
+          }
+        }
+      },
+      {
+        "name": "kaskad_get_project_info",
+        "displayName": "Get Kaskad Project Information",
+        "modelDescription": "Get detailed information about a specific Kaskad project including version, paths, and status. Use when the user asks for details about a specific project.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "kaskad_project_details",
+        "icon": "$(info)",
+        "userDescription": "Get detailed information about a specific Kaskad project",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "projectId": {
+              "type": "string",
+              "description": "The project ID/name to get information for"
+            }
+          },
+          "required": [
+            "projectId"
+          ]
+        }
+      },
+      {
+        "name": "kaskad_set_active_project",
+        "displayName": "Set Active Kaskad Project",
+        "modelDescription": "Set the currently active/selected Kaskad project in VS Code. Use when the user wants to switch to a different project context or work with a specific project.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "kaskad_select_project",
+        "icon": "$(target)",
+        "userDescription": "Set the active Kaskad project",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "projectId": {
+              "type": "string",
+              "description": "The project ID/name to set as active"
+            }
+          },
+          "required": [
+            "projectId"
+          ]
+        }
+      },
+      {
+        "name": "kaskad_start_project",
+        "displayName": "Start Kaskad Project",
+        "modelDescription": "Start a Kaskad project (starts PMON and all managers). Use when the user wants to start a project or run a project.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "kaskad_start",
+        "icon": "$(play)",
+        "userDescription": "Start a Kaskad project",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "projectId": {
+              "type": "string",
+              "description": "The project ID/name to start"
+            },
+            "waitForStartup": {
+              "type": "boolean",
+              "description": "Wait for project to fully start (default: false)"
+            }
+          },
+          "required": [
+            "projectId"
+          ]
+        }
+      },
+      {
+        "name": "kaskad_stop_project",
+        "displayName": "Stop Kaskad Project",
+        "modelDescription": "Stop a running Kaskad project (stops all managers and PMON). Use when the user wants to stop a project or shut down a project.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "kaskad_stop",
+        "icon": "$(debug-stop)",
+        "userDescription": "Stop a running Kaskad project",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "projectId": {
+              "type": "string",
+              "description": "The project ID/name to stop"
+            },
+            "timeout": {
+              "type": "number",
+              "description": "Timeout in seconds (default: 30)"
+            }
+          },
+          "required": [
+            "projectId"
+          ]
+        }
+      },
+      {
+        "name": "kaskad_get_pmon_status",
+        "displayName": "Get Kaskad PMON Status",
+        "modelDescription": "Get the PMON (Process Monitor) status for a Kaskad project. PMON manages all project processes. Use when the user asks about project runtime status or if a project is running.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "kaskad_pmon",
+        "icon": "$(pulse)",
+        "userDescription": "Get PMON status for a Kaskad project",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "projectId": {
+              "type": "string",
+              "description": "The project ID/name to check PMON status for"
+            }
+          },
+          "required": [
+            "projectId"
+          ]
+        }
+      },
+      {
+        "name": "kaskad_project_managers",
+        "displayName": "List Kaskad Managers",
+        "modelDescription": "List all managers (processes/components) running in a Kaskad project. Managers include Event, Dist, DB, UI, etc. Use when the user asks about running components or processes.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "kaskad_project_managers",
+        "icon": "$(server-process)",
+        "userDescription": "List all managers in a Kaskad project",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "projectId": {
+              "type": "string",
+              "description": "The project ID/name (optional - defaults to active project)"
+            },
+            "statusFilter": {
+              "type": "string",
+              "enum": [
+                "all",
+                "running",
+                "stopped"
+              ],
+              "description": "Filter managers by status (default: all)"
+            }
+          },
+          "required": []
+        }
+      },
+      {
+        "name": "kaskad_start_manager",
+        "displayName": "Start Kaskad Manager",
+        "modelDescription": "Start a specific manager (process/component) in a Kaskad project. Managers are identified by their number (e.g., 1 for DIST_1, 2 for EVENT_1). Use when the user wants to start a specific manager.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "kaskad_manager_start",
+        "icon": "$(play)",
+        "userDescription": "Start a specific manager in a Kaskad project",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "managerNum": {
+              "type": "number",
+              "description": "The manager number to start (e.g., 1 for DIST_1)"
+            },
+            "projectId": {
+              "type": "string",
+              "description": "The project ID/name (optional - defaults to active project)"
+            }
+          },
+          "required": [
+            "managerNum"
+          ]
+        }
+      },
+      {
+        "name": "kaskad_stop_manager",
+        "displayName": "Stop Kaskad Manager",
+        "modelDescription": "Stop a specific manager (process/component) in a Kaskad project. Use when the user wants to stop a specific manager or troubleshoot a manager issue.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "kaskad_manager_stop",
+        "icon": "$(stop)",
+        "userDescription": "Stop a specific manager in a Kaskad project",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "managerNum": {
+              "type": "number",
+              "description": "The manager number to stop (e.g., 2 for EVENT_1)"
+            },
+            "projectId": {
+              "type": "string",
+              "description": "The project ID/name (optional - defaults to active project)"
+            }
+          },
+          "required": [
+            "managerNum"
+          ]
+        }
+      },
+      {
+        "name": "kaskad_restart_manager",
+        "displayName": "Restart Kaskad Manager",
+        "modelDescription": "Restart a specific manager (stop then start). Use when the user wants to restart a manager to apply changes or troubleshoot.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "kaskad_manager_restart",
+        "icon": "$(debug-restart)",
+        "userDescription": "Restart a specific manager in a Kaskad project",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "managerNum": {
+              "type": "number",
+              "description": "The manager number to restart"
+            },
+            "projectId": {
+              "type": "string",
+              "description": "The project ID/name (optional - defaults to active project)"
+            }
+          },
+          "required": [
+            "managerNum"
+          ]
+        }
+      },
+      {
+        "name": "kaskad_add_manager",
+        "displayName": "Add Kaskad Manager",
+        "modelDescription": "Add a new manager to a Kaskad project. Opens the manager add wizard for user input. Use when the user wants to add or create a new manager component.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "kaskad_manager_add",
+        "icon": "$(add)",
+        "userDescription": "Add a new manager to a Kaskad project",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "component": {
+              "type": "string",
+              "description": "Manager component name (e.g., WCCOActrl, WCCOAui, WCCOAascii)"
+            },
+            "startMode": {
+              "type": "number",
+              "description": "Start mode: 0=Manual, 1=Once, 2=Always (default: 2)"
+            },
+            "startOptions": {
+              "type": "string",
+              "description": "Command-line options (e.g., '-num 1 -f script.ctl')"
+            },
+            "secondToKill": {
+              "type": "number",
+              "description": "Seconds to wait before force kill (default: 30)"
+            },
+            "resetMin": {
+              "type": "number",
+              "description": "Minutes before allowing restart (default: 1)"
+            },
+            "resetStartCounter": {
+              "type": "number",
+              "description": "Max restart attempts (default: 3)"
+            },
+            "projectId": {
+              "type": "string",
+              "description": "The project ID/name (optional - defaults to active project)"
+            }
+          },
+          "required": [
+            "component"
+          ]
+        }
+      },
+      {
+        "name": "kaskad_delete_manager",
+        "displayName": "Delete Kaskad Manager",
+        "modelDescription": "Delete a manager from a Kaskad project. Cannot delete PMON or Data Manager (index 0-1). Use when the user wants to remove a manager.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "kaskad_manager_delete",
+        "icon": "$(trash)",
+        "userDescription": "Delete a manager from a Kaskad project",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "managerNum": {
+              "type": "number",
+              "description": "The manager number to delete (must be > 1, cannot delete PMON or Data Manager)"
+            },
+            "projectId": {
+              "type": "string",
+              "description": "The project ID/name (optional - defaults to active project)"
+            }
+          },
+          "required": [
+            "managerNum"
+          ]
+        }
+      },
+      {
+        "name": "kaskad_configure_manager",
+        "displayName": "Configure Kaskad Manager",
+        "modelDescription": "Configure manager settings (start mode, kill timeout, restart behavior). Opens the manager configuration panel for user input. Cannot configure PMON or Data Manager.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "kaskad_manager_configure",
+        "icon": "$(settings-gear)",
+        "userDescription": "Configure settings for a Kaskad manager",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "managerNum": {
+              "type": "number",
+              "description": "The manager number to configure (must be > 1)"
+            },
+            "startMode": {
+              "type": "number",
+              "description": "Start mode: 0=Manual, 1=Once, 2=Always"
+            },
+            "startOptions": {
+              "type": "string",
+              "description": "Command-line options"
+            },
+            "secondToKill": {
+              "type": "number",
+              "description": "Seconds to wait before force kill"
+            },
+            "resetMin": {
+              "type": "number",
+              "description": "Minutes before allowing restart"
+            },
+            "resetStartCounter": {
+              "type": "number",
+              "description": "Max restart attempts"
+            },
+            "projectId": {
+              "type": "string",
+              "description": "The project ID/name (optional - defaults to active project)"
+            }
+          },
+          "required": [
+            "managerNum"
+          ]
+        }
+      }
+    ],
+    "configuration": {
+      "title": "Kaskad Project Admin",
+      "properties": {
+        "kaskadProjectAdmin.pvssInstConfPath": {
+          "type": "string",
+          "default": "C:\\ProgramData\\Sybcom\\Kaskad\\pvssInst.conf",
+          "description": "Path to pvssInst.conf"
+        },
+        "kaskadProjectAdmin.installationPathBase": {
+          "type": "string",
+          "default": "C:\\Sybcom\\Kaskad",
+          "description": "Base installation path. Version is appended (e.g. \\3.18)"
+        },
+        "kaskadProjectAdmin.binPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional: add this path to PATH for pmon (e.g. C:\\Kaskad\\3.18\\bin). Use if managers don't load or DLL errors. Empty = auto from installationPathBase"
+        },
+        "kaskadProjectAdmin.pmonRunningExitCodes": {
+          "type": "array",
+          "items": { "type": "number" },
+          "default": [0],
+          "description": "Exit codes from pmon -status that mean 'running'. Default [0]. Add codes only if your pmon returns different (e.g. Kaskad)"
+        },
+        "kaskadProjectAdmin.showInfoNotifications": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show informational popup notifications (e.g. 'Manager started successfully'). Disabled by default - use Output channel for logs"
+        },
+        "kaskadProjectAdmin.logLevel": {
+          "type": "string",
+          "enum": [
+            "ERROR",
+            "WARN",
+            "INFO",
+            "DEBUG",
+            "TRACE"
+          ],
+          "default": "INFO",
+          "description": "Logging level for extension output",
+          "enumDescriptions": [
+            "Only critical errors",
+            "Errors and warnings",
+            "General information, errors and warnings (recommended)",
+            "Detailed debugging information",
+            "Very verbose trace information (for troubleshooting)"
+          ]
+        }
+      }
+    }
+  },
+  "scripts": {
+    "postinstall": "patch-package",
+    "vscode:prepublish": "npm run compile",
+    "compile": "webpack",
+    "clean:out": "node -e \"require('fs').rmSync('out',{ recursive:true, force:true, maxRetries:10, retryDelay:200 })\"",
+    "start": "code --extensionDevelopmentPath=.",
+    "start:insiders": "code-insiders --extensionDevelopmentPath=.",
+    "dev": "npm run watch",
+    "watch": "webpack --watch",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "style-check": "npm run format:check && npm run lint"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "@types/vscode": "^1.109.0",
+    "@typescript-eslint/eslint-plugin": "^8.56.0",
+    "@typescript-eslint/parser": "^8.55.0",
+    "@vscode/vsce": "^3.7.1",
+    "eslint": "^8.50.0",
+    "patch-package": "^8.0.1",
+    "prettier": "^2.8.8",
+    "ts-loader": "^9.5.4",
+    "typescript": "^5.2.0",
+    "webpack": "^5.105.2",
+    "webpack-cli": "^6.0.1"
+  },
+  "dependencies": {
+    "@winccoa-tools-pack/npm-winccoa-core": "0.2.6"
+  }
+}

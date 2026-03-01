@@ -1,0 +1,12 @@
+{
+    "folders": [
+        {
+            "name": "Kaskad Project Admin",
+            "path": ".."
+        }
+    ],
+    "settings": {
+        "typescript.preferences.noSemicolons": "off",
+        "editor.formatOnSave": true
+    }
+}

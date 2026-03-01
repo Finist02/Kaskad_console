@@ -1,0 +1,275 @@
+diff --git a/node_modules/@winccoa-tools-pack/npm-winccoa-core/dist/cjs/types/components/WinCCOAComponent.js b/node_modules/@winccoa-tools-pack/npm-winccoa-core/dist/cjs/types/components/WinCCOAComponent.js
+index d20a1a4..818c6cd 100644
+--- a/node_modules/@winccoa-tools-pack/npm-winccoa-core/dist/cjs/types/components/WinCCOAComponent.js
++++ b/node_modules/@winccoa-tools-pack/npm-winccoa-core/dist/cjs/types/components/WinCCOAComponent.js
+@@ -207,7 +207,11 @@ class WinCCOAComponent {
+         if (!p)
+             throw new Error('Executable ' + this.getName() + ' not found');
+         return new Promise((resolve, reject) => {
+-            const spawnOptions = { shell: false };
++            const binDir = path.dirname(p);
++            const pathSep = process.platform === 'win32' ? ';' : ':';
++            const extraBin = process.env.WINCCOA_BIN_PATH ? process.env.WINCCOA_BIN_PATH.trim() + pathSep : '';
++            const pathEnv = extraBin + binDir + pathSep + (process.env.PATH || '');
++            const spawnOptions = { shell: false, env: { ...process.env, PATH: pathEnv } };
+             let timeoutHandle = null;
+             if (options.detached) {
+                 // For detached processes, ignore stdio to prevent parent from waiting
+@@ -285,10 +289,16 @@ class WinCCOAComponent {
+      * @throws Error if process fails to spawn or timeout is exceeded
+      */
+     async execAndCollectLines(cmdPath, args, timeout) {
++        const useStderr = true;
+         console.log(`[${new Date().toISOString()}] Executing command for component ${this.getName()}:`, cmdPath, args, timeout ? `(timeout: ${timeout}ms)` : '');
++        const binDir = path.dirname(cmdPath);
++        const pathSep = process.platform === 'win32' ? ';' : ':';
++        const extraBin = process.env.WINCCOA_BIN_PATH ? process.env.WINCCOA_BIN_PATH.trim() + pathSep : '';
++        const pathEnv = extraBin + binDir + pathSep + (process.env.PATH || '');
+         return new Promise((resolve, reject) => {
+-            const proc = (0, child_process_1.spawn)(cmdPath, args, { shell: false });
++            const proc = (0, child_process_1.spawn)(cmdPath, args, { shell: false, env: { ...process.env, PATH: pathEnv } });
+             let stdout = '';
++            let stderr = '';
+             let timeoutHandle = null;
+             if (timeout && timeout > 0) {
+                 timeoutHandle = setTimeout(() => {
+@@ -303,12 +313,16 @@ class WinCCOAComponent {
+             });
+             proc.stderr?.on('data', (d) => {
+                 const s = d.toString();
++                stderr += s;
+                 this.stdErr += s;
+             });
+             proc.on('close', (_code) => {
+                 if (timeoutHandle)
+                     clearTimeout(timeoutHandle);
+-                const lines = stdout
++                const primary = useStderr ? stderr : stdout;
++                const fallback = useStderr ? stdout : stderr;
++                const src = primary + (primary && fallback ? '\n' : '') + fallback;
++                const lines = src
+                     .split(/\r?\n/)
+                     .map((l) => l.trim())
+                     .filter((l) => l.length > 0 && l !== ';');
+diff --git a/node_modules/@winccoa-tools-pack/npm-winccoa-core/dist/cjs/types/components/implementations/PmonComponent.js b/node_modules/@winccoa-tools-pack/npm-winccoa-core/dist/cjs/types/components/implementations/PmonComponent.js
+index 95026b6..84c7698 100644
+--- a/node_modules/@winccoa-tools-pack/npm-winccoa-core/dist/cjs/types/components/implementations/PmonComponent.js
++++ b/node_modules/@winccoa-tools-pack/npm-winccoa-core/dist/cjs/types/components/implementations/PmonComponent.js
+@@ -86,7 +86,7 @@ class PmonComponent extends WinCCOAComponent_1.WinCCOAComponent {
+          -status  ... returns status of pmon:
+           0=pmon is running, 3=pmon is stopped, 4=unknown
+         */
+-        const args = ['-status', '-proj', projectName, '-log', '+stdout'];
++        const args = ['-status', '-proj', projectName, '-log', '+stderr'];
+         const code = this.startAndValidateOutput(args, { checkStdout: () => { } });
+         return this.pmonStateCodeToStatus(await code);
+     }
+@@ -235,25 +235,17 @@ class PmonComponent extends WinCCOAComponent_1.WinCCOAComponent {
+     }
+     //-------------------------------------------------------------------------
+     /**
+-     * Gets the list of managers in a project
++     * Gets the list of managers in a project (MGRLIST:LIST via TCP to running pmon).
+      */
+     async getManagerOptionsList(projectName) {
+         const pmonPath = this.getPath();
+         if (!pmonPath) {
+             throw new Error('WCCILpmon executable not found');
+         }
+-        const args = [
+-            '-proj',
+-            projectName,
+-            '-command',
+-            this.makeCliCredentials() + 'MGRLIST:LIST',
+-            '-log',
+-            '+stdout',
+-        ];
++        const args = ['-proj', projectName, '-command', this.makeCliCredentials() + 'MGRLIST:LIST', '-log', '+stderr'];
+         const callPath = pmonPath ?? '';
+         const lines = await this.execAndCollectLines(callPath, args);
+-        const parsed = this.parseManagerList(lines.join('\n'));
+-        return parsed;
++        return this.parseManagerList(lines.join('\n'));
+     }
+     //-------------------------------------------------------------------------
+     /**
+@@ -358,18 +350,19 @@ once 30 3 1 -m gedi -n -num 5` to get the properties. It shall be mu more faster
+             const errorMsg = 'Could not locate WCCILpmon executable';
+             throw new Error(errorMsg);
+         }
+-        const args = [
+-            '-proj',
+-            projectName,
+-            '-command',
+-            this.makeCliCredentials() + 'MGRLIST:STATI',
+-            '-log',
+-            '+stdout',
+-        ];
++        const args = ['-proj', projectName, '-command', this.makeCliCredentials() + 'MGRLIST:STATI', '-log', '+stderr'];
++        this.stdErr = '';
+         const callPath = pmonPath ?? '';
+         const lines = await this.execAndCollectLines(callPath, args);
+         const raw = lines.join('\n');
+         const parsed = this.parseManagerStatus(raw);
++        const log = typeof globalThis !== 'undefined' && globalThis.__WINCCOA_LOG;
++        if (log && (!parsed.managers || parsed.managers.length === 0)) {
++            if (raw.trim())
++                globalThis.__WINCCOA_LOG('debug', `MGRLIST:STATI capture (${raw.length} chars): ${raw.substring(0, 600)}`);
++            if (this.stdErr && this.stdErr.trim())
++                globalThis.__WINCCOA_LOG('debug', `MGRLIST:STATI stderr: ${this.stdErr.substring(0, 400)}`);
++        }
+         return parsed;
+     }
+     //-------------------------------------------------------------------------
+@@ -497,19 +490,31 @@ once 30 3 1 -m gedi -n -num 5` to get the properties. It shall be mu more faster
+      * @returns
+      */
+     pmonStateCodeToStatus(code) {
+-        console.log('Pmon status code:', code);
+-        if (code === 0)
++        const runningCodesEnv = process.env.WINCCOA_PMON_RUNNING_CODES;
++        const runningCodes = runningCodesEnv
++            ? runningCodesEnv.split(',').map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n))
++            : [0];
++        const codeNum = typeof code === 'number' ? code : (code != null ? parseInt(String(code), 10) : NaN);
++        const log = typeof globalThis !== 'undefined' && globalThis.__WINCCOA_LOG;
++        if (log)
++            globalThis.__WINCCOA_LOG('debug', `pmon -status exit code: ${codeNum} | runningCodes: [${runningCodes.join(',')}]`);
++        if (runningCodes.includes(codeNum))
+             return ProjEnvPmonStatus_1.ProjEnvPmonStatus.Running;
+-        if (code === 3)
++        if (codeNum === 3)
+             return ProjEnvPmonStatus_1.ProjEnvPmonStatus.NotRunning;
+         return ProjEnvPmonStatus_1.ProjEnvPmonStatus.Unknown;
+     }
+     //-------------------------------------------------------------------------
++    // Strip Kaskad prefix (WCCILpmon1:) from output lines
++    stripKaskadPrefix(line) {
++        return line.replace(/^WCCILpmon\d*:/, '').trim();
++    }
++    //-------------------------------------------------------------------------
+     // Private parser for manager list output
+     parseManagerList(output) {
+         const lines = output
+             .split(/\r?\n/)
+-            .map((l) => l.trim())
++            .map((l) => this.stripKaskadPrefix(l.trim()))
+             .filter((l) => l.length > 0 && l !== ';');
+         if (lines.length === 0)
+             return [];
+@@ -517,18 +522,19 @@ once 30 3 1 -m gedi -n -num 5` to get the properties. It shall be mu more faster
+             lines.shift();
+         const result = [];
+         for (const line of lines) {
++            if (/WARNING|PARAM|^\s*WCCILpmon\s+\(\d+\)/i.test(line))
++                continue;
+             const parts = line.split(';');
+             if (parts.length < 1)
+                 continue;
+-            if (parts.length < 6) {
+-                throw new Error(`The line '${line}' has incorrect format`);
+-            }
++            if (parts.length < 5)
++                continue;
++            const args = parts.length >= 6 ? parts.slice(5).filter(Boolean).join(';') : '';
+             const name = parts[0];
+             const startModeNum = Number(parts[1]);
+             const seckill = Number(parts[2]);
+             const restartCount = Number(parts[3]);
+             const resetMin = Number(parts[4]);
+-            const args = parts.slice(5).filter(Boolean).join(';');
+             let startModeEnum;
+             switch (startModeNum) {
+                 case 0:
+@@ -595,12 +601,14 @@ once 30 3 1 -m gedi -n -num 5` to get the properties. It shall be mu more faster
+     // Parse STATI output into typed managers and project state
+     parseManagerStatus(output) {
+         const managers = [];
+-        const lines = output.split('\n');
++        const lines = output.split('\n').map((l) => this.stripKaskadPrefix(l));
+         let listStarted = false;
+         let projectState = undefined;
+         let projectStateLineFound = false;
+         for (let i = 0; i < lines.length; i++) {
+-            const trimmed = lines[i].trim();
++            const trimmed = lines[i];
++            if (/WARNING|PARAM|^\s*WCCILpmon\s+\(\d+\)/i.test(trimmed))
++                continue;
+             if (trimmed.startsWith('STATI:') || trimmed.startsWith('LIST:')) {
+                 listStarted = true;
+                 continue;
+@@ -613,7 +621,7 @@ once 30 3 1 -m gedi -n -num 5` to get the properties. It shall be mu more faster
+             // Look ahead to detect project state line (line before ';')
+             let isProjectStateLine = false;
+             for (let j = i + 1; j < lines.length; j++) {
+-                const nextTrimmed = lines[j].trim();
++                const nextTrimmed = lines[j];
+                 if (nextTrimmed === ';') {
+                     isProjectStateLine = true;
+                     break;
+diff --git a/node_modules/@winccoa-tools-pack/npm-winccoa-core/dist/cjs/types/project/ProjEnvProjectRegistry.js b/node_modules/@winccoa-tools-pack/npm-winccoa-core/dist/cjs/types/project/ProjEnvProjectRegistry.js
+index 8b56f3e..1039871 100644
+--- a/node_modules/@winccoa-tools-pack/npm-winccoa-core/dist/cjs/types/project/ProjEnvProjectRegistry.js
++++ b/node_modules/@winccoa-tools-pack/npm-winccoa-core/dist/cjs/types/project/ProjEnvProjectRegistry.js
+@@ -344,6 +344,10 @@ function parseProjRegistryFile(configPath) {
+  * @returns The full path to the pvssInst.conf file
+  */
+ function getPvssInstConfPath() {
++    const envPath = process.env.PVSS_INST_CONF_PATH;
++    if (envPath && envPath.trim() !== '') {
++        return envPath.trim();
++    }
+     if (os.platform() === 'win32') {
+         // Windows path
+         return 'C:\\ProgramData\\Siemens\\WinCC_OA\\pvssInst.conf';
+diff --git a/node_modules/@winccoa-tools-pack/npm-winccoa-core/dist/cjs/utils/winccoa-paths.js b/node_modules/@winccoa-tools-pack/npm-winccoa-core/dist/cjs/utils/winccoa-paths.js
+index b4ba8a3..c590a33 100644
+--- a/node_modules/@winccoa-tools-pack/npm-winccoa-core/dist/cjs/utils/winccoa-paths.js
++++ b/node_modules/@winccoa-tools-pack/npm-winccoa-core/dist/cjs/utils/winccoa-paths.js
+@@ -86,6 +86,20 @@ function getWinCCOAInstallationPathByVersion(version) {
+     if (cachedWinCCOAInstallationPathByVersion[version] !== undefined) {
+         return cachedWinCCOAInstallationPathByVersion[version];
+     }
++    const installBase = process.env.WINCCOA_INSTALL_BASE;
++    if (installBase && installBase.trim() !== '') {
++        const base = installBase.trim();
++        const versionNorm = version.split('.').slice(0, 2).join('.');
++        const candidates = [path.join(base, version), path.join(base, versionNorm)];
++        for (const customPath of candidates) {
++            if (fs.existsSync(customPath)) {
++                cachedWinCCOAInstallationPathByVersion[version] = customPath;
++                return cachedWinCCOAInstallationPathByVersion[version];
++            }
++        }
++        cachedWinCCOAInstallationPathByVersion[version] = null;
++        return null;
++    }
+     const platform = os.platform();
+     if (platform === 'win32') {
+         cachedWinCCOAInstallationPathByVersion[version] = getWindowsInstallationPath(version);
+@@ -161,6 +175,25 @@ function getAvailableWinCCOAVersions() {
+     if (cachedAvailableWinCCOAVersions !== null) {
+         return cachedAvailableWinCCOAVersions;
+     }
++    const installBase = process.env.WINCCOA_INSTALL_BASE;
++    if (installBase && installBase.trim() !== '') {
++        const basePath = installBase.trim();
++        if (fs.existsSync(basePath)) {
++            try {
++                const entries = fs.readdirSync(basePath);
++                const versions = entries.filter((entry) => {
++                    const fullPath = path.join(basePath, entry);
++                    return fs.statSync(fullPath).isDirectory() && /^\d+\.\d+/.test(entry);
++                });
++                cachedAvailableWinCCOAVersions = versions.sort((a, b) => (0, winccoa_version_info_1.parseVersionString)(b) - (0, winccoa_version_info_1.parseVersionString)(a));
++                return cachedAvailableWinCCOAVersions;
++            }
++            catch (error) {
++                cachedAvailableWinCCOAVersions = [];
++                return cachedAvailableWinCCOAVersions;
++            }
++        }
++    }
+     const platform = os.platform();
+     if (platform === 'win32') {
+         cachedAvailableWinCCOAVersions = getWindowsAvailableVersions();
